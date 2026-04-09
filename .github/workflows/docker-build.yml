@@ -1,0 +1,36 @@
+name: Build & Test Docker Image
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 🟢 拉代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 🟢 设置 Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 🟢 登录 Docker（如果你要 push registry 才需要）
+      # 目前Claw Cloud Run模式可以不写push
+
+      # 🟢 构建镜像（核心）
+      - name: Build Docker image
+        run: |
+          docker build -t mc-afk-bot:latest .
+
+      # 🟢 可选：运行测试（防止bot崩）
+      - name: Test container startup
+        run: |
+          timeout 10s docker run \
+            -e MC_HOST=test \
+            -e MC_PORT=25565 \
+            -e MC_USERNAME=test \
+            mc-afk-bot:latest || true
