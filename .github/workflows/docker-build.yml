@@ -23,4 +23,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: jerusalemking/mcshbot:200
+          tags: jerusalemking/mcshbot:2000
