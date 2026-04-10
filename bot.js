@@ -1,20 +1,23 @@
 const mineflayer = require('mineflayer')
 
 // =======================
-// Bot实例
+// 环境变量（标准写法）
 // =======================
-let bot
+const HOST = process.env.MC_HOST || "127.0.0.1"
+const PORT = Number(process.env.MC_PORT || 25565)
+const USERNAME = process.env.MC_USERNAME || "AFK_Bot"
 
 // =======================
-// 状态控制
+// 状态变量
 // =======================
+let bot
 let ready = false
 let alive = true
 let lastSpeakTime = 0
 let boredom = 0
 
 // =======================
-// 随机话术库（可自行扩展）
+// 话术库
 // =======================
 const phrases = [
   "hmm...",
@@ -28,13 +31,16 @@ const phrases = [
 ]
 
 // =======================
-// 启动Bot
+// 启动
 // =======================
 function createBot() {
+
+  console.log("🔌 Connecting to:", HOST, PORT, USERNAME)
+
   bot = mineflayer.createBot({
-    host: process.env.HOST,
-    port: process.env.PORT,
-    username: process.env.USERNAME
+    host: HOST,
+    port: PORT,
+    username: USERNAME
   })
 
   bindEvents()
@@ -52,10 +58,10 @@ function bindEvents() {
     ready = false
     boredom = 0
 
-    // ❗关键：spawn后必须冷却，否则容易 invalid move packet
+    // ❗关键：spawn冷却（防 Invalid move packet）
     setTimeout(() => {
       ready = true
-      console.log('[ready] bot stable')
+      console.log('[ready] stable state')
 
       startBehaviorLoop()
       startAutoSpeak()
@@ -73,14 +79,20 @@ function bindEvents() {
     setTimeout(createBot, 5000)
   })
 
-  bot.on('kicked', console.log)
-  bot.on('error', console.log)
+  bot.on('kicked', (reason) => {
+    console.log('[kicked]', reason?.toString?.() || reason)
+  })
+
+  bot.on('error', (err) => {
+    console.log('[error]', err)
+  })
 }
 
 // =======================
-// 行为系统（低频拟人）
+// 行为系统（拟人核心）
 // =======================
 function startBehaviorLoop() {
+
   setInterval(() => {
 
     if (!bot.entity || !alive || !ready) return
@@ -97,16 +109,16 @@ function startBehaviorLoop() {
     else if (r < 0.9) {
       lookAround()
     }
-    // 10% 微动作
+    // 10% 微动
     else {
       microTurn()
     }
 
-  }, random(25000, 60000)) // 非固定节奏
+  }, random(25000, 60000))
 }
 
 // =======================
-// 无聊值系统（核心拟人点）
+// 无聊系统（核心拟人）
 // =======================
 function updateBoredom() {
   boredom += 0.02
@@ -114,14 +126,14 @@ function updateBoredom() {
 }
 
 // =======================
-// 行为1：发呆（最重要）
+// 行为1：发呆
 // =======================
 function idle() {
-  // 故意什么都不做
+  // intentionally empty (像真人挂机)
 }
 
 // =======================
-// 行为2：随机看方向
+// 行为2：随机观察
 // =======================
 function lookAround() {
   if (!bot.entity) return
@@ -136,16 +148,13 @@ function lookAround() {
 }
 
 // =======================
-// 行为3：轻微转头（人类微操作）
+// 行为3：轻微转头
 // =======================
 function microTurn() {
   if (!bot.entity) return
 
-  const yaw =
-    bot.entity.yaw + (Math.random() - 0.5) * 0.6
-
-  const pitch =
-    bot.entity.pitch + (Math.random() - 0.5) * 0.1
+  const yaw = bot.entity.yaw + (Math.random() - 0.5) * 0.6
+  const pitch = bot.entity.pitch + (Math.random() - 0.5) * 0.1
 
   safeLook(yaw, pitch)
 
@@ -154,26 +163,25 @@ function microTurn() {
 }
 
 // =======================
-// 自动说话系统（核心需求）
+// 自动说话系统（无人环境核心）
 // =======================
 function startAutoSpeak() {
+
   setInterval(() => {
 
     if (!bot.entity || !alive || !ready) return
 
     const now = Date.now()
 
-    // ❗防刷屏（最低60秒间隔）
+    // ❗防刷屏
     if (now - lastSpeakTime < 60000) return
 
-    const chance = Math.random()
-
-    // ❗基础概率 + 无聊驱动
     const speakChance = boredom > 0.6 ? 0.4 : 0.15
 
-    if (chance < speakChance) {
+    if (Math.random() < speakChance) {
       sayRandom()
       lastSpeakTime = now
+
       boredom -= 0.3
       if (boredom < 0) boredom = 0
     }
@@ -182,14 +190,12 @@ function startAutoSpeak() {
 }
 
 // =======================
-// 发言函数
+// 随机发言
 // =======================
 function sayRandom() {
-  if (!bot || !bot.chat) return
 
   let msg
 
-  // 避免重复
   do {
     msg = phrases[Math.floor(Math.random() * phrases.length)]
   } while (Math.random() < 0.3 && msg === phrases[0])
