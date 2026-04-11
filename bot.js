@@ -3,7 +3,7 @@ const mineflayer = require('mineflayer')
 // =======================
 // 环境变量
 // =======================
-const HOST = process.env.MC_HOST || "127.0.0.1"
+const HOST = process.env.MC_HOST || "darkodyssey932.mcsh.io"
 const PORT = Number(process.env.MC_PORT || 25565)
 const USERNAME = process.env.MC_USERNAME || "AFK_Bot"
 
