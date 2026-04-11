@@ -45,7 +45,8 @@ function createBot() {
   bot = mineflayer.createBot({
     host: HOST,
     port: PORT,
-    username: USERNAME
+    username: USERNAME,
+    version: "1.21.4"
   })
 
   bindEvents()
